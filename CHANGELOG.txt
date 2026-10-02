@@ -1,0 +1,14 @@
+CHANGELOG - ATM Sanse: Informe de estado
+=========================================
+Todas las entradas relevantes de este proyecto se documentan en este archivo.
+Formato de versiones: semver (MAYOR.MENOR.PARCHE), a numerar cuando se cierre una versión.
+
+## [Sin publicar]
+
+## [1.0.0] - 2026-10-02
+- Primera versión: mu-plugin autónomo que cada lunes a las 7:30 (hora de Madrid, respetando el cambio de hora) envía por `wp_mail()` un informe de estado a webadmin@atmsanse.com, sin endpoint, sin token y sin servicios externos. Asunto con veredicto OK / ATENCIÓN / CRÍTICO.
+- Contenido del informe: estado del servidor, actualizaciones pendientes de núcleo, plugins y temas (con resumen del changelog de los plugins de wordpress.org) e inventario de plugins, problemas (errores PHP de 7 días agrupados y sin rutas ni correos, `debug.log` público, modo de recuperación, correos fallidos, Site Health), seguridad (checksums del núcleo, PHP en `uploads`, administradores, accesos fallidos) y actividad del sitio y de la Zona de Alumnos, solo en cifras agregadas.
+- Contadores diarios agregados de inicios de sesión, descargas, accesos fallidos y correos fallidos, sin usuarios ni IPs y con retención de 90 días; cuentan desde el despliegue.
+- Solo se programa y envía en el dominio de producción; fuera de él el evento se borra. Un recolector que falla no impide el correo.
+- Comando `wp atm-informe` (`mostrar`, `enviar`, `estado`); fuera de producción `enviar` exige `--a=<correo>`.
+- Cargador `loader/atm-informe-estado.php`, que va copiado en `mu-plugins/` porque WordPress no carga subcarpetas.
