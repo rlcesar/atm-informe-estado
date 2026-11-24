@@ -5,6 +5,18 @@ Formato de versiones: semver (MAYOR.MENOR.PARCHE), a numerar cuando se cierre un
 
 ## [Sin publicar]
 
+## [1.1.0] - 2026-11-24
+- Lint propio: `phpcs.xml.dist` (WPCS, text domain `atm-informe-estado`, prefijo `atm_inf`) y el código al día con él: ternarios cortos sustituidos por completos, separador de `atm-informe-estado.php` en comentarios de línea y `phpcs:ignore` justificados en las propiedades de PHPMailer y del objeto de actualizaciones. Sin cambios de comportamiento (`wp atm-informe mostrar` idéntico).
+- Documentación al día: `CLAUDE.md` (lint con `php -l` y `phpcs -n`, crítico/atención de las actualizaciones, despliegue sin `PLAN.md` ni `phpcs.xml.dist`, cron pendiente) y el DocBlock de `atm_inf_enviar_informe()` (no registra el envío).
+- El envío manual (`wp atm-informe enviar`) ya no actualiza `atm_inf_ultimo_envio` ni anula el informe del lunes: solo lo fijan el evento semanal y el reintento al enviar con éxito. La ayuda del comando lo explica.
+- Reintento del informe semanal: si el envío falla (o el proceso muere a medias), se reintenta cada hora hasta 3 veces antes de esperar al lunes siguiente (evento `atm_inf_informe_reintento`, contador `atm_inf_reintentos`, filtro `atm_inf_max_reintentos`); `wp atm-informe estado` muestra el reintento pendiente. La comprobación de producción pasa al principio del manejador.
+- Privacidad: los mensajes de error del log que salen en el informe ya no incluyen IPs (v4 ni v6) ni rutas absolutas del servidor: la ruta de WordPress pasa a `…/` y las demás se reducen al nombre del archivo (nueva `atm_inf_sanear_mensaje_log()`); antes una línea de SiteGround podía llevar la IP del visitante.
+- Candado atómico contra el doble envío (opción `atm_inf_enviando`, `INSERT IGNORE`, se retoma a los 15 min si queda huérfano): dos disparos simultáneos del cron ya no mandan el informe dos veces.
+- Corregido: los títulos de curso del informe ya no salen con entidades HTML (`&amp;`, `&#8217;`) en el texto plano ni en el aviso de cursos inactivos; el HTML sigue escapándose en la plantilla.
+- Los contadores ya no leen `atm_inf_contadores_desde` en cada petición: la fecha de inicio se fija al registrar el primer evento.
+- El callback de `wp_login` tolera argumentos que no sean un `WP_User`: un plugin de inicio de sesión externo ya no puede provocar un error fatal en pleno login.
+- Informe de estado: la fila de disco pasa a ser orientativa (es el volumen del servidor, no la cuota de SiteGround, que se ve en Site Tools); se quitan el aviso crítico y el de menos del 20 %, y solo queda un aviso de atención si queda menos del 10 % libre.
+
 ## [1.0.0] - 2026-10-02
 - Primera versión: mu-plugin autónomo que cada lunes a las 7:30 (hora de Madrid, respetando el cambio de hora) envía por `wp_mail()` un informe de estado a webadmin@atmsanse.com, sin endpoint, sin token y sin servicios externos. Asunto con veredicto OK / ATENCIÓN / CRÍTICO.
 - Contenido del informe: estado del servidor, actualizaciones pendientes de núcleo, plugins y temas (con resumen del changelog de los plugins de wordpress.org) e inventario de plugins, problemas (errores PHP de 7 días agrupados y sin rutas ni correos, `debug.log` público, modo de recuperación, correos fallidos, Site Health), seguridad (checksums del núcleo, PHP en `uploads`, administradores, accesos fallidos) y actividad del sitio y de la Zona de Alumnos, solo en cifras agregadas.

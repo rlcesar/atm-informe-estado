@@ -118,12 +118,11 @@ function atm_inf_recolectar_estado(): array {
 
 	if ( $libre && $total ) {
 		$pct_libre    = $libre / $total * 100;
-		$s['filas'][] = array( 'Disco (volumen)', size_format( $libre ) . ' libres de ' . size_format( $total ) . ' (' . round( $pct_libre ) . ' % libre)' );
+		$s['filas'][] = array( 'Disco (volumen del servidor, orientativo)', size_format( $libre ) . ' libres de ' . size_format( $total ) . ' (' . round( $pct_libre ) . ' % libre)' );
+		$s['notas'][] = 'El disco es el del volumen del servidor, no la cuota del plan; la cuota real de SiteGround se ve en Site Tools.';
 
 		if ( $pct_libre < 10 ) {
-			atm_inf_anadir_aviso( $s, 'critico', 'Queda menos del 10 % de disco libre.' );
-		} elseif ( $pct_libre < 20 ) {
-			atm_inf_anadir_aviso( $s, 'atencion', 'Queda menos del 20 % de disco libre.' );
+			atm_inf_anadir_aviso( $s, 'atencion', 'Queda menos del 10 % de disco libre en el volumen del servidor (dato orientativo).' );
 		}
 	} else {
 		$s['notas'][] = 'El hosting no permite consultar el espacio en disco desde PHP.';

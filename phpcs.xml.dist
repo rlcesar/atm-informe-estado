@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!--
+	Reglas de lint (WPCS) del mu-plugin atm-informe-estado (informe semanal de estado): text domain atm-informe-estado,
+	prefijos atm_inf / ATM_INF. El cargador loader/ (copia del de mu-plugins/) entra por la carpeta raíz. Solo de desarrollo: no se despliega.
+-->
+<ruleset name="Proyecto WordPress">
+	<description>WordPress Coding Standards</description>
+
+	<file>.</file>
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+	<exclude-pattern>/build/*</exclude-pattern>
+	<exclude-pattern>*.min.js</exclude-pattern>
+	<exclude-pattern>*.asset.php</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+
+	<config name="minimum_wp_version" value="6.5"/>
+
+	<rule ref="WordPress"/>
+
+	<!-- Text domain del proyecto -->
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="atm-informe-estado"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!-- Prefijo obligatorio para funciones, hooks y globales -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="atm_inf"/>
+				<element value="ATM_INF"/>
+			</property>
+		</properties>
+		<!-- Se excluye ShortPrefixPassed por si el sniff mide el prefijo corto; es convención fija del proyecto. -->
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+	</rule>
+</ruleset>

@@ -133,7 +133,7 @@ function atm_inf_recolectar_actualizaciones(): array {
 
 				if ( $resumen['seguridad'] ) {
 					$notas[]     = 'MENCIONA SEGURIDAD';
-					$seguridad[] = $plugin->Name;
+					$seguridad[] = $plugin->Name; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- propiedad del objeto de actualizaciones de WordPress; no la nombra este código.
 				}
 			}
 		} elseif ( ! $de_repositorio ) {
@@ -156,7 +156,7 @@ function atm_inf_recolectar_actualizaciones(): array {
 			$notas[] = 'Se actualizará sola (autoactualización activada).';
 		}
 
-		$filas[] = array( $plugin->Name, $plugin->Version . ' → ' . $nueva, implode( ' ', $notas ) );
+		$filas[] = array( $plugin->Name, $plugin->Version . ' → ' . $nueva, implode( ' ', $notas ) ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- propiedad del objeto de actualizaciones de WordPress; no la nombra este código.
 	}
 
 	if ( $filas ) {
@@ -210,7 +210,7 @@ function atm_inf_recolectar_actualizaciones(): array {
 	}
 
 	foreach ( get_mu_plugins() as $datos ) {
-		$tabla[] = array( $datos['Name'], $datos['Version'] ?: '—', 'mu-plugin' );
+		$tabla[] = array( $datos['Name'], '' !== (string) $datos['Version'] ? $datos['Version'] : '—', 'mu-plugin' );
 	}
 
 	$inactivos    = count( $todos ) - count( array_intersect( $activos, array_keys( $todos ) ) );

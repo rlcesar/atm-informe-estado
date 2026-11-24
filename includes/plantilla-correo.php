@@ -82,9 +82,9 @@ function atm_inf_html_tabla( array $cabecera, array $filas ): string {
  * @return string
  */
 function atm_inf_renderizar_html( array $informe ): string {
-	$color    = atm_inf_color( $informe['veredicto'] );
-	$fuente   = 'font-family:Arial,Helvetica,sans-serif;';
-	$cuerpo   = '';
+	$color  = atm_inf_color( $informe['veredicto'] );
+	$fuente = 'font-family:Arial,Helvetica,sans-serif;';
+	$cuerpo = '';
 
 	// Resumen: veredicto y lista de avisos.
 	$cuerpo .= '<p style="margin:0 0 14px;' . $fuente . 'font-size:15px;color:#333333;">Resultado: <strong style="color:' . esc_attr( $color ) . ';">' . esc_html( $informe['veredicto'] ) . '</strong></p>';

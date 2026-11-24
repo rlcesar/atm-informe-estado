@@ -40,7 +40,10 @@ function atm_inf_recolectar_actividad(): array {
 	$hace_30 = wp_date( 'Y-m-d H:i:s', time() - 30 * DAY_IN_SECONDS );
 
 	// Contenido del sitio.
-	foreach ( array( 'teatro_curso' => 'Cursos publicados', 'teatro_show' => 'Actuaciones publicadas' ) as $tipo => $etiqueta ) {
+	foreach ( array(
+		'teatro_curso' => 'Cursos publicados',
+		'teatro_show'  => 'Actuaciones publicadas',
+	) as $tipo => $etiqueta ) {
 		if ( post_type_exists( $tipo ) ) {
 			$s['filas'][] = array( $etiqueta, (string) ( wp_count_posts( $tipo )->publish ?? 0 ) );
 		}
@@ -77,7 +80,15 @@ function atm_inf_recolectar_actividad(): array {
 
 	if ( isset( $roles['atm_za_profesor'] ) || $roles_alumno ) {
 		$alumnos = $roles_alumno
-			? count( get_users( array( 'role__in' => $roles_alumno, 'fields' => 'ID', 'number' => -1 ) ) )
+			? count(
+				get_users(
+					array(
+						'role__in' => $roles_alumno,
+						'fields'   => 'ID',
+						'number'   => -1,
+					)
+				)
+			)
 			: 0;
 
 		$s['filas'][] = array( 'Profesorado con acceso a la Zona de Alumnos', (string) ( $roles['atm_za_profesor'] ?? 0 ) );
@@ -114,8 +125,15 @@ function atm_inf_recolectar_actividad(): array {
 				$mensajes     = $por_mensajes[ $curso_id ] ?? null;
 				$ultimo       = max( (string) ( $archivos->ultimo ?? '' ), (string) ( $mensajes->ultimo ?? '' ) );
 
+				// Título en texto plano: `get_the_title()` devuelve entidades (&amp;, &#8217;) y la plantilla ya escapa al sacar HTML.
+				$titulo = html_entity_decode( wp_strip_all_tags( get_the_title( $curso_id ) ), ENT_QUOTES, 'UTF-8' );
+
+				if ( '' === trim( $titulo ) ) {
+					$titulo = 'Curso ' . $curso_id;
+				}
+
 				$filas[] = array(
-					get_the_title( $curso_id ) ?: 'Curso ' . $curso_id,
+					$titulo,
 					(string) $matriculados,
 					$archivos ? (int) $archivos->n . ' (' . size_format( (int) $archivos->bytes ) . ')' : '0',
 					(string) (int) ( $mensajes->n ?? 0 ),
@@ -123,7 +141,7 @@ function atm_inf_recolectar_actividad(): array {
 				);
 
 				if ( $matriculados > 0 && ( '' === $ultimo || $ultimo < $hace_30 ) ) {
-					$inactivos[] = get_the_title( $curso_id ) ?: 'Curso ' . $curso_id;
+					$inactivos[] = $titulo;
 				}
 			}
 

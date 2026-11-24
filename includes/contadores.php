@@ -68,6 +68,8 @@ function atm_inf_guardar_contadores( array $datos, string $hoy ): void {
  * @param int|null $user_id Si se indica, cuenta además al usuario como «distinto» de hoy.
  */
 function atm_inf_registrar_evento( string $clave, ?int $user_id = null ): void {
+	atm_inf_asegurar_inicio_contadores();
+
 	$datos = atm_inf_leer_contadores();
 	$hoy   = wp_date( 'Y-m-d' );
 
@@ -101,8 +103,8 @@ function atm_inf_registrar_evento( string $clave, ?int $user_id = null ): void {
  *               correos_fallidos y distintos_media (usuarios distintos por día).
  */
 function atm_inf_totales_ventana( int $dias, int $desplazamiento = 0 ): array {
-	$datos  = atm_inf_leer_contadores();
-	$totales = array(
+	$datos     = atm_inf_leer_contadores();
+	$totales   = array(
 		'login_zona'       => 0,
 		'login_otros'      => 0,
 		'login_fallidos'   => 0,
@@ -134,21 +136,29 @@ function atm_inf_totales_ventana( int $dias, int $desplazamiento = 0 ): array {
 
 /**
  * Anota el día en que empezaron a contarse los datos (una sola vez).
+ *
+ * Se llama desde `atm_inf_registrar_evento()`, no en cada petición.
  */
 function atm_inf_asegurar_inicio_contadores(): void {
 	if ( false === get_option( ATM_INF_OPCION_DESDE ) ) {
 		add_option( ATM_INF_OPCION_DESDE, wp_date( 'Y-m-d' ), '', false );
 	}
 }
-add_action( 'init', 'atm_inf_asegurar_inicio_contadores', 20 );
 
 /**
  * Cuenta un inicio de sesión correcto, separando Zona de Alumnos del resto.
  *
- * @param string  $user_login Nombre de usuario (no se guarda).
- * @param WP_User $user       Usuario que ha entrado.
+ * Sin tipos en los parámetros a propósito: otro plugin podría disparar
+ * `wp_login` con algo que no sea un `WP_User` y no debe romper el login.
+ *
+ * @param mixed $user_login Nombre de usuario (no se guarda).
+ * @param mixed $user       Usuario que ha entrado (se ignora si no es `WP_User`).
  */
-function atm_inf_hook_login( string $user_login, WP_User $user ): void {
+function atm_inf_hook_login( $user_login, $user ): void {
+	if ( ! $user instanceof WP_User ) {
+		return;
+	}
+
 	foreach ( (array) $user->roles as $rol ) {
 		if ( str_starts_with( (string) $rol, 'atm_za_' ) ) {
 			atm_inf_registrar_evento( 'login_zona', (int) $user->ID );

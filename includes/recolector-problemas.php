@@ -86,9 +86,7 @@ function atm_inf_analizar_log_errores( string $ruta ): array {
 			++$niveles['otros'];
 		}
 
-		$mensaje = str_replace( ABSPATH, '…/', $m[3] );
-		$mensaje = (string) preg_replace( '/[\w.+-]+@[\w-]+(\.[\w-]+)+/', '[correo]', $mensaje );
-		$mensaje = mb_substr( trim( $mensaje ), 0, 170 );
+		$mensaje = mb_substr( trim( atm_inf_sanear_mensaje_log( $m[3] ) ), 0, 170 );
 		$clave   = $m[2] . '|' . $mensaje;
 
 		if ( ! isset( $grupos[ $clave ] ) ) {
@@ -112,6 +110,52 @@ function atm_inf_analizar_log_errores( string $ruta ): array {
 }
 
 /**
+ * Quita de un mensaje del log lo que no debe salir en el informe.
+ *
+ * Sustituye `ABSPATH`, correos, IPs (v4 y v6) y rutas absolutas (Unix y Windows),
+ * conservando el nombre del archivo final. No trunca: eso lo hace quien llama.
+ *
+ * @param string $mensaje Mensaje tal cual está en el log.
+ * @return string Mensaje saneado.
+ */
+function atm_inf_sanear_mensaje_log( string $mensaje ): string {
+	if ( defined( 'ABSPATH' ) && '' !== ABSPATH ) {
+		$mensaje = str_replace( ABSPATH, '…/', $mensaje );
+	}
+
+	$mensaje = (string) preg_replace( '/[\w.+-]+@[\w-]+(\.[\w-]+)+/', '[correo]', $mensaje );
+
+	// IPv6: candidatas con al menos dos ":" validadas, para no comerse horas ni "Clase::metodo".
+	$mensaje = (string) preg_replace_callback(
+		'/(?<![\w:.])[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*:[0-9A-Fa-f:.]*(?![\w:])/',
+		static function ( array $c ): string {
+			$candidata = rtrim( $c[0], '.' );
+
+			if ( false === filter_var( $candidata, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+				return $c[0];
+			}
+
+			return '[ip]' . substr( $c[0], strlen( $candidata ) );
+		},
+		$mensaje
+	);
+
+	// IPv4: cuatro grupos validados (octetos 0-255).
+	$mensaje = (string) preg_replace_callback(
+		'/(?<![\w.])\d{1,3}(?:\.\d{1,3}){3}(?!\d|\.\d)/',
+		static function ( array $c ): string {
+			return false === filter_var( $c[0], FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ? $c[0] : '[ip]';
+		},
+		$mensaje
+	);
+
+	// Rutas absolutas restantes: Unix (con al menos un directorio) y Windows.
+	$mensaje = (string) preg_replace( '#(?<![\w.\-:/…])/(?:[^\s/\'":,;()<>]+/)+([^\s/\'":,;()<>]+)#u', '…/$1', $mensaje );
+
+	return (string) preg_replace( '#(?<!\w)[A-Za-z]:\\\\+(?:[^\s\\\\\'"<>|]+\\\\+)*([^\s\\\\\'":<>|]+)#u', '…/$1', $mensaje );
+}
+
+/**
  * Comprueba si `wp-content/debug.log` se puede descargar por URL.
  *
  * @return bool true si responde 200 (el registro es público: grave).
@@ -121,7 +165,13 @@ function atm_inf_debug_log_es_publico(): bool {
 		return false;
 	}
 
-	$respuesta = wp_remote_head( content_url( 'debug.log' ), array( 'timeout' => 8, 'redirection' => 0 ) );
+	$respuesta = wp_remote_head(
+		content_url( 'debug.log' ),
+		array(
+			'timeout'     => 8,
+			'redirection' => 0,
+		)
+	);
 
 	return ! is_wp_error( $respuesta ) && 200 === (int) wp_remote_retrieve_response_code( $respuesta );
 }

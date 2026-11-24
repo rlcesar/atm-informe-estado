@@ -25,6 +25,7 @@ function atm_inf_destinatario(): string {
 
 /**
  * Construye el informe y lo envía por correo (HTML con alternativa en texto plano).
+ * No registra el envío: `atm_inf_ultimo_envio` la escribe solo el cron en `includes/programacion.php`.
  *
  * @param string|null $destinatario Correo al que enviarlo; por defecto, el destinatario fijo.
  * @return bool true si `wp_mail()` ha aceptado el envío.
@@ -35,12 +36,12 @@ function atm_inf_enviar_informe( ?string $destinatario = null ): bool {
 		@set_time_limit( 180 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- puede estar desactivada en el hosting.
 	}
 
-	$destinatario = $destinatario ?: atm_inf_destinatario();
+	$destinatario = '' !== (string) $destinatario ? $destinatario : atm_inf_destinatario();
 	$informe      = atm_inf_construir_informe();
 	$texto        = atm_inf_renderizar_texto( $informe );
 
 	$alternativa = static function ( $phpmailer ) use ( $texto ): void {
-		$phpmailer->AltBody = $texto;
+		$phpmailer->AltBody = $texto; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- propiedad de PHPMailer; no la nombra este código.
 	};
 
 	add_action( 'phpmailer_init', $alternativa );
@@ -52,9 +53,7 @@ function atm_inf_enviar_informe( ?string $destinatario = null ): bool {
 	);
 	remove_action( 'phpmailer_init', $alternativa );
 
-	if ( $enviado ) {
-		update_option( ATM_INF_OPCION_ENVIO, time(), false );
-	} else {
+	if ( ! $enviado ) {
 		error_log( 'ATM Informe de estado: wp_mail() no ha podido enviar el informe.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- no hay otro canal si falla el correo.
 	}
 

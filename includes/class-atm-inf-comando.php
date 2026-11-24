@@ -42,6 +42,9 @@ class Atm_Inf_Comando {
 	/**
 	 * Construye el informe y lo envía por correo.
 	 *
+	 * Es un envío manual: no cuenta como el de la semana (no actualiza
+	 * «Último envío») y no anula el del lunes.
+	 *
 	 * ## OPTIONS
 	 *
 	 * [--a=<correo>]
@@ -84,8 +87,10 @@ class Atm_Inf_Comando {
 
 		WP_CLI::line( 'Producción (dominio): ' . ( atm_inf_es_produccion() ? 'sí' : 'no — no se programa ni se envía solo' ) );
 		WP_CLI::line( 'Próximo envío programado: ' . ( $proximo ? wp_date( 'Y-m-d H:i T', $proximo ) : 'ninguno' ) );
+		$reintento = wp_next_scheduled( ATM_INF_HOOK_REINTENTO );
+		WP_CLI::line( 'Reintento pendiente: ' . ( $reintento ? wp_date( 'Y-m-d H:i T', $reintento ) . ' (intentos: ' . (int) get_option( ATM_INF_OPCION_REINTENTOS, 0 ) . ')' : 'ninguno' ) );
 		WP_CLI::line( 'Último envío: ' . ( $ultimo ? wp_date( 'Y-m-d H:i T', $ultimo ) : 'nunca' ) );
-		WP_CLI::line( 'Contadores de accesos desde: ' . ( get_option( ATM_INF_OPCION_DESDE ) ?: 'sin iniciar' ) );
+		WP_CLI::line( 'Contadores de accesos desde: ' . ( '' !== (string) get_option( ATM_INF_OPCION_DESDE ) ? get_option( ATM_INF_OPCION_DESDE ) : 'sin iniciar' ) );
 		WP_CLI::line( 'Destinatario: ' . atm_inf_destinatario() );
 	}
 }
